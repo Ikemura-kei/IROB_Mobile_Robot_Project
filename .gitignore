@@ -3,7 +3,9 @@
 /install/
 /log/
 
-# pixi environment (pixi.toml and pixi.lock ARE tracked; the env is not)
+# pixi environment (pixi/pixi.toml and pixi/pixi.lock ARE tracked; the env is not).
+# The manifest lives in pixi/, so pixi creates its environment there.
+/pixi/.pixi/
 /.pixi/
 
 # Python

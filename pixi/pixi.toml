@@ -12,37 +12,22 @@ platforms = [
 version = "1.0.0"
 preview = ["pixi-build"]
 
-# --- Environments ------------------------------------------------------------
-# Two ways to get a working ROS 2:
+# --- Why this file lives in pixi/ rather than the workspace root -------------
+# The lab PCs get ROS 2 from `module add dd2410`, and pixi must stay out of the
+# way there. pixi only ever searches the current directory and its PARENTS for a
+# manifest, never its children, so keeping this one in a subdirectory means the
+# workspace root has no pixi project at all: a student on a lab machine cannot
+# trip over it, and `pixi shell` in the workspace root simply reports that it
+# found no manifest.
 #
-#   default      no packages at all. `pixi shell` installs NOTHING and simply
-#                activates the workspace, for machines where ROS 2 is already
-#                provided -- the school lab PCs, where `module add dd2410` puts
-#                it on the PATH before you ever call pixi.
+# Students working on their own machine opt in explicitly instead, by naming
+# this file:
 #
-#   own-device   the full ROS 2 stack, downloaded and managed by pixi, for
-#                students working on their own laptop:
+#     pixi shell --manifest-path pixi/pixi.toml
 #
-#                    pixi shell -e own-device
-#
-# The tasks below are declared at the top level, so BOTH environments have them:
-# `pixi run build`, `pixi run mission` and friends work the same either way.
-[environments]
-default = { features = [] }
-own-device = { features = ["own-device"] }
+# See section 2 of the README.
 
-[activation.env]
-# Everything in this workspace runs on one machine, so pin gz-transport to
-# loopback. Otherwise it binds whichever external interface it finds first (a
-# VPN interface such as tailscale0, for instance) and its discovery becomes
-# hostage to the machine's network state -- if that interface goes away or
-# NetworkManager restarts mid-run, the gz server hangs during startup before it
-# logs anything, and the GUI sits forever on "Waiting for subscribers to
-# [/gazebo/starting_world]". It also stops two students on the same LAN from
-# discovering each other's simulations.
-GZ_IP = "127.0.0.1"
-
-[feature.own-device.dependencies]
+[dependencies]
 # ROS
 ros-jazzy-desktop = ">=0.11.0,<0.12"
 ros-jazzy-ros2run = ">=0.32.6,<0.33"
@@ -141,22 +126,33 @@ sqlite = ">=3.53.4,<4"
 # xarm_ros2/thirdparty/realsense_gazebo_plugin
 ros-jazzy-image-transport = "*"
 
-[feature.own-device.activation.env]
+[activation.env]
 # The robot URDF asks Gazebo for <plugin filename="gz_ros2_control-system">, with
-# no path, so gz resolves it through GZ_SIM_SYSTEM_PLUGIN_PATH. The robostack
-# conda package ships only ament_prefix_path/path hooks, and the .so lives in
+# no path, so gz resolves it through GZ_SIM_SYSTEM_PLUGIN_PATH. The Debian package
+# ships an environment hook that adds the ROS lib dir; the robostack conda package
+# does not (it only ships ament_prefix_path/path hooks), and the .so lives in
 # $CONDA_PREFIX/lib, which is not one of gz's default plugin directories.
 # Without this the plugin never loads => no controller_manager => the controller
 # spawners fail and nothing publishes odom->base_link, so Nav2 spins forever on
 # "Could not find a connection between 'odom' and 'base_link'".
-#
-# Scoped to this feature on purpose. The Debian packaging behind the lab module
-# ships the equivalent hook itself, so setting this in the default environment
-# would replace a correct path with an empty pixi prefix and break plugin
-# loading on exactly the machines that do not need the workaround.
 GZ_SIM_SYSTEM_PLUGIN_PATH = "$CONDA_PREFIX/lib"
 
+# Everything in this workspace runs on one machine, so pin gz-transport to
+# loopback. Otherwise it binds whichever external interface it finds first (a
+# VPN interface such as tailscale0, for instance) and its discovery becomes
+# hostage to the machine's network state -- if that interface goes away or
+# NetworkManager restarts mid-run, the gz server hangs during startup before it
+# logs anything, and the GUI sits forever on "Waiting for subscribers to
+# [/gazebo/starting_world]". It also stops two students on the same LAN from
+# discovering each other's simulations.
+GZ_IP = "127.0.0.1"
+
 [tasks]
+
+# Every task below carries `cwd = ".."`. This manifest lives in pixi/, one level
+# down from the workspace, so without it colcon would run inside pixi/ and find
+# no src/ to build. With it, `build`, `install` and `log` land in the workspace
+# root exactly as they do for the lab-PC instructions in the README.
 
 # --- Warehouse_robot tasks ---------------------------------------------------
 # Build the from-source packages. --base-paths names them explicitly so colcon
@@ -169,13 +165,13 @@ GZ_SIM_SYSTEM_PLUGIN_PATH = "$CONDA_PREFIX/lib"
 # compilers here — enough to exhaust RAM and hard-freeze the machine on the
 # MoveIt-linked xarm packages. 4 workers x -j2 = 8 compilers max (~70% of 12).
 # On a machine with more RAM you can raise both numbers.
-build = { cmd = "colcon build --base-paths src/Warehouse_robot --parallel-workers 4", env = { MAKEFLAGS = "-j2", CMAKE_BUILD_PARALLEL_LEVEL = "2" } }
+build = { cmd = "colcon build --base-paths src/Warehouse_robot --parallel-workers 4", env = { MAKEFLAGS = "-j2", CMAKE_BUILD_PARALLEL_LEVEL = "2" }, cwd = ".." }
 
 # Rebuild ONLY warehouse_inventory_robot (~2s, vs. a full `build`). Use this after
 # every edit to mission_node.py: because `build` above cannot pass
 # --symlink-install, colcon COPIES the .py files into install/, so `pixi run
 # mission-node` keeps running the previously built copy until you rebuild.
-build-mission = { cmd = "colcon build --base-paths src/Warehouse_robot --packages-select warehouse_inventory_robot" }
+build-mission = { cmd = "colcon build --base-paths src/Warehouse_robot --packages-select warehouse_inventory_robot", cwd = ".." }
 
 # Run: `pixi run build` once, then these two in separate terminals.
 #
@@ -191,7 +187,7 @@ build-mission = { cmd = "colcon build --base-paths src/Warehouse_robot --package
 # the argument to `bash -c '...'`, where it becomes $0 rather than part of the
 # command, so ros2 launch never sees it and the grade silently stays at its
 # default. That failure is invisible apart from the world being the wrong one.
-mission = { cmd = "bash -c 'source install/setup.bash && ros2 launch warehouse_inventory_robot mission.launch.py grade:=${GRADE:-e}'" }
+mission = { cmd = "bash -c 'source install/setup.bash && ros2 launch warehouse_inventory_robot mission.launch.py grade:=${GRADE:-e}'", cwd = ".." }
 # use_sim_time matters here, it is not boilerplate. The tree's settling waits
 # are measured in SIMULATED time, because what they wait for -- the robot
 # settling on its suspension, the gripper taking hold -- happens in simulated
@@ -208,7 +204,7 @@ mission = { cmd = "bash -c 'source install/setup.bash && ros2 launch warehouse_i
 # It defaults to e. The node logs the grade it is running as on its first line,
 # so a mismatch shows up immediately rather than as the robot driving twenty
 # metres to the wrong box.
-mission-node = { cmd = "bash -c 'source install/setup.bash && ros2 run warehouse_inventory_robot mission_node --ros-args -p use_sim_time:=true -p grade:=${GRADE:-e}'" }
+mission-node = { cmd = "bash -c 'source install/setup.bash && ros2 run warehouse_inventory_robot mission_node --ros-args -p use_sim_time:=true -p grade:=${GRADE:-e}'", cwd = ".." }
 
 # A-grade only, and normally NOT needed: mission.launch.py already starts
 # relocate_robot, so just use RViz's "Publish Point" tool to click where the
@@ -220,7 +216,7 @@ mission-node = { cmd = "bash -c 'source install/setup.bash && ros2 run warehouse
 # it against a simulation started some other way.
 #
 # Only relevant to the A grade; the other grades always start from the origin.
-relocate = { cmd = "bash -c 'source install/setup.bash && ros2 run warehouse_inventory_robot relocate_robot'" }
+relocate = { cmd = "bash -c 'source install/setup.bash && ros2 run warehouse_inventory_robot relocate_robot'", cwd = ".." }
 
 # Ctrl-C on `pixi run mission` does not stop Gazebo: ros_gz_sim starts
 # `gz sim server` in its own process group, so the terminal's SIGINT never
@@ -237,4 +233,4 @@ relocate = { cmd = "bash -c 'source install/setup.bash && ros2 run warehouse_inv
 # order and the /dev/shm cleanup right takes more than one line, and a script
 # file cannot accidentally match its own command line the way a `bash -c`
 # string does. See the header of that file for the full reasoning.
-sim-clean = { cmd = "bash scripts/sim_clean.sh" }
+sim-clean = { cmd = "bash scripts/sim_clean.sh", cwd = ".." }

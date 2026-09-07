@@ -12,12 +12,6 @@ environments:
     - url: https://prefix.dev/pixi-build-backends/
     - url: https://prefix.dev/conda-forge/
     - url: https://prefix.dev/robostack-jazzy/
-    packages: {}
-  own-device:
-    channels:
-    - url: https://prefix.dev/pixi-build-backends/
-    - url: https://prefix.dev/conda-forge/
-    - url: https://prefix.dev/robostack-jazzy/
     packages:
       linux-64:
       - conda: https://prefix.dev/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda

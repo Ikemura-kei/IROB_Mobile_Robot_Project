@@ -2,15 +2,17 @@
 
 ## 1. 🖥️ Usage for Lab PC
 
-The lab machines run everything inside a `pixi shell` rather than through
-`pixi run`. The shell activates the same environment the tasks use, so ROS 2,
-Gazebo and the `GZ_*` variables the simulator needs are all in place once you
-are inside it.
+The lab machines get ROS 2, Gazebo and `colcon` from the `dd2410` environment
+module, which the administrators have bundled with everything the course needs.
+You load the module and enter a `pixi shell`, which picks that bundled
+environment up — nothing is downloaded or installed.
 
-ROS 2 itself comes from the `dd2410` module, not from pixi: the default pixi
-environment deliberately declares no packages, so `pixi shell` here downloads
-and installs **nothing**. Run `module add dd2410` *before* `pixi shell`, so the
-shell inherits it.
+For that to work this repository deliberately keeps **no pixi project in its
+root**: `pixi.toml` and `pixi.lock` live in `pixi/` instead. pixi searches the
+current directory and its parents for a manifest, never its children, so
+`pixi shell` here finds the module's bundled environment rather than a manifest
+belonging to this repository. The one in `pixi/` is only for students running on
+their own machine, and is opted into explicitly (section 2).
 
 ### 1.1 Pre-requisites
 Make sure you have enough disk quota left on the lab machine. A fully-used quota can even create login issues.
@@ -49,26 +51,37 @@ MAKEFLAGS=-j2 CMAKE_BUILD_PARALLEL_LEVEL=2 colcon build --base-paths src/Warehou
 
 ### 1.3 Running the project codebase
 
-Open two terminals. **Each needs its own `pixi shell` and its own
-`source install/setup.bash`** — the environment does not carry between
+Open two terminals. **Each needs the `dd2410` module, its own `pixi shell` and
+its own `source install/setup.bash`** — the environment does not carry between
 terminals, and `setup.bash` is what puts the packages you just built onto the
 ROS path.
 
 Terminal-1:
 ```bash
+source /etc/profile.d/modules.sh
+module add dd2410
 pixi shell
 source install/setup.bash
 export ROS_LOCALHOST_ONLY=1
+export GZ_IP=127.0.0.1
 GRADE=e ros2 launch warehouse_inventory_robot mission.launch.py
 ```
 
 Terminal-2:
 ```bash
+source /etc/profile.d/modules.sh
+module add dd2410
 pixi shell
 source install/setup.bash
 export ROS_LOCALHOST_ONLY=1
+export GZ_IP=127.0.0.1
 GRADE=e ros2 run warehouse_inventory_robot mission_node --ros-args -p use_sim_time:=true
 ```
+
+> ⚠️ **Keep `GZ_IP=127.0.0.1`.** It pins Gazebo's transport to loopback. Without
+> it, gz binds whichever external interface it finds first, which in a lab means
+> your simulation and the machine next to you can discover each other and
+> interfere.
 
 Use the same grade in both — `GRADE` is what selects it, exactly as in
 section 2. Change it to `c` or `a` for those grades. If you would rather not
@@ -99,39 +112,50 @@ git clone https://github.com/Ikemura-kei/IROB_Mobile_Robot_Project.git
 Then please run the following to install:
 ```bash
 cd IROB_Mobile_Robot_Project
-pixi install -e own-device
-pixi run -e own-device build
+pixi shell --manifest-path pixi
+pixi run build
 ```
 
-> ℹ️ **Why `-e own-device`.** The default environment is the one the lab PCs
-> use, and it installs no packages because the lab machines already provide ROS
-> 2. On your own machine you want pixi to supply the whole ROS 2 stack instead,
-> which is what the `own-device` environment is for. Pass `-e own-device` to
-> every `pixi install` and `pixi run` below, or the commands will run against
-> the empty default environment and fail to find `ros2`.
+The first command downloads the whole ROS 2 stack and drops you in a shell that
+has it; the second builds the workspace. Expect the install to take a while and
+a few GB the first time. It is cached, so later runs are fast.
+
+> ℹ️ **Why `--manifest-path pixi`.** The pixi project deliberately does not live
+> in the repository root — the lab machines get ROS 2 from an environment module
+> and must not see a pixi project at all (section 1). So `pixi.toml` and
+> `pixi.lock` sit in `pixi/`, and you point pixi at them once with
+> `--manifest-path pixi` (`-m pixi` for short). Running plain `pixi shell` in the
+> repository root will just report that it found no manifest — that is expected.
+>
+> You only need the flag to *enter* the shell. Once inside, `pixi run ...` finds
+> the project on its own, and the tasks build into the repository root rather
+> than into `pixi/`.
 
 ### 2.2 Running the project codebase
 
-Open two terminals and run the following commands.
+Open two terminals. **Each needs its own `pixi shell`** — the environment does
+not carry between terminals.
 
 Terminal-1:
 ```bash
+pixi shell --manifest-path pixi
 export ROS_LOCALHOST_ONLY=1
-GRADE=e pixi run -e own-device mission
+GRADE=e pixi run mission
 ```
 
 Terminal-2:
 ```bash
+pixi shell --manifest-path pixi
 export ROS_LOCALHOST_ONLY=1
-GRADE=e pixi run -e own-device mission-node
+GRADE=e pixi run mission-node
 ```
 
 Upon killing the simulation, it is recommended to run a cleaning utility, since the Gazebo server is sometimes left orphaned and interferes with the next run:
 ```bash
-pixi run -e own-device sim-clean
+pixi run sim-clean
 ```
 
-In case changes are made to `mission_node.py`, you only need to recompile that specific package. Feel free to use the provided utility `pixi run -e own-device build-mission`, which builds only the package you modified.
+In case changes are made to `mission_node.py`, you only need to recompile that specific package. Feel free to use the provided utility `pixi run build-mission`, which builds only the package you modified.
 
 ## 3. 💡 Hints and tips
 > You will need to have configuration files for at least `nav2` and `amcl` packages. Those configuration files can be placed at `src/Warehouse_robot/warehouse_inventory_robot/config`!
