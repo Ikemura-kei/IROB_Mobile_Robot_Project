@@ -64,6 +64,7 @@ pixi shell
 source install/setup.bash
 export ROS_LOCALHOST_ONLY=1
 export GZ_IP=127.0.0.1
+export GZ_SIM_SYSTEM_PLUGIN_PATH=$CONDA_PREFIX/lib
 GRADE=e ros2 launch warehouse_inventory_robot mission.launch.py
 ```
 
@@ -75,13 +76,31 @@ pixi shell
 source install/setup.bash
 export ROS_LOCALHOST_ONLY=1
 export GZ_IP=127.0.0.1
+export GZ_SIM_SYSTEM_PLUGIN_PATH=$CONDA_PREFIX/lib
 GRADE=e ros2 run warehouse_inventory_robot mission_node --ros-args -p use_sim_time:=true
 ```
 
-> ⚠️ **Keep `GZ_IP=127.0.0.1`.** It pins Gazebo's transport to loopback. Without
-> it, gz binds whichever external interface it finds first, which in a lab means
-> your simulation and the machine next to you can discover each other and
-> interfere.
+> ⚠️ **Keep both `export`s, and keep them after `pixi shell`.**
+>
+> `GZ_SIM_SYSTEM_PLUGIN_PATH` is how Gazebo finds
+> `libgz_ros2_control-system.so`. The robot URDF asks for that plugin by bare
+> filename with no path, and the module's ROS 2 is a conda environment whose
+> packaging ships no hook adding its `lib/` to gz's plugin search path. Without
+> it you get
+>
+> ```
+> [Err] [SystemLoader.cc:92] Failed to load system plugin
+> [libgz_ros2_control-system.so] : Could not find shared library.
+> ```
+>
+> and then, because no `controller_manager` ever starts, both controller
+> spawners die with `Could not contact service
+> /controller_manager/list_controllers`. It refers to `$CONDA_PREFIX`, which
+> only exists once you are inside the pixi shell — so set it there, not before.
+>
+> `GZ_IP=127.0.0.1` pins Gazebo's transport to loopback. Without it, gz binds
+> whichever external interface it finds first, which in a lab means your
+> simulation and the machine next to you can discover each other and interfere.
 
 Use the same grade in both — `GRADE` is what selects it, exactly as in
 section 2. Change it to `c` or `a` for those grades. If you would rather not
