@@ -7,7 +7,18 @@ The lab machines run everything inside a `pixi shell` rather than through
 Gazebo and the `GZ_*` variables the simulator needs are all in place once you
 are inside it.
 
-### 1.1 Installation
+### 1.1 Pre-requisites
+Make sure you have enough disk quota left on the lab machine. A fully-used quota can even create login issues.
+
+We provide a simple utility to check both the disk quota used and the storage distribution. Just run
+
+```bash
+bash scripts/check_disk_usage.sh 
+```
+
+A window should pop-up with the information on disk quota usage percentage and storage distribution. It will refresh periodically so you can see your real-time disk usage. An interesting observation would be open `Chrome` and you might see disk usage slowly rises, since `Chrome` puts cache and stuff. Cleaning the cache directory is recommended once in a while.
+
+### 1.2 Installation
 
 ```bash
 git clone https://github.com/Ikemura-kei/IROB_Mobile_Robot_Project.git
@@ -31,7 +42,7 @@ MAKEFLAGS=-j2 CMAKE_BUILD_PARALLEL_LEVEL=2 colcon build --base-paths src/Warehou
 > compilers as the machine has cores, which is enough to exhaust its RAM and
 > freeze it.
 
-### 1.2 Running the project codebase
+### 1.3 Running the project codebase
 
 Open two terminals. **Each needs its own `pixi shell` and its own
 `source install/setup.bash`** — the environment does not carry between
