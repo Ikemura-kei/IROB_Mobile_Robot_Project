@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<robot name="tb4_lite6" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- 1. Include the TurtleBot4 URDF -->
+  <!-- This automatically brings in the TB4 links, joints, and Gazebo plugins -->
+  <xacro:include filename="$(find turtlebot4_description)/urdf/standard/turtlebot4.urdf.xacro" />
+
+  <!-- 2. Include the Lite6 Arm Macro -->
+  <xacro:include filename="$(find xarm_description)/urdf/lite6/lite6.urdf.xacro" />
+
+  <!-- 3. Instantiate the Arm WITH A PREFIX -->
+  <!-- By adding "arm_", the base link becomes "arm_link_base" instead of "link_base", preventing crashes -->
+  <xacro:lite6_urdf prefix="arm_" hw_ns="ufactory" add_gripper="false" /> 
+
+  <!-- 4. The Mounting Bracket (The crucial Gazebo connection) -->
+  <!-- This bolts the arm to the top plate of the TurtleBot -->
+  <joint name="arm_mount_joint" type="fixed">
+    <parent link="top_plate_link"/> <!-- This is the top of the TB4 -->
+    <child link="arm_link_base"/>   <!-- This is the bottom of the Lite6 -->
+    <!-- You will need to adjust the XYZ to center the arm on the plate -->
+    <origin xyz="0.0 0.0 0.05" rpy="0 0 0"/> 
+  </joint>
+
+</robot>

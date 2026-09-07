@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<robot name="tb4_lite6" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find turtlebot4_description)/urdf/standard/turtlebot4.urdf.xacro" />
+
+  <xacro:arg name="use_gazebo" default="true"/>
+  <xacro:arg name="gz_type" default="gz"/>
+  <xacro:arg name="robot_type" default="lite"/>
+  <xacro:arg name="dof" default="6"/>
+  <xacro:arg name="add_gripper" default="false"/>
+  <xacro:arg name="ros2_control_params" default="$(find xarm_controller)/config/lite6_controllers.yaml"/>
+  
+  <xacro:include filename="$(find xarm_description)/urdf/xarm_device_macro.xacro" />
+
+  <xacro:xarm_device 
+    prefix="arm_" 
+    dof="6" 
+    robot_type="lite" 
+    add_vacuum_gripper="true"
+    attach_to="shell_link"
+    attach_xyz="0.0 0.0 0.3"
+    attach_rpy="0 0 0"
+    ros2_control_plugin="gz_ros2_control/GazeboSimSystem"
+    inertial_params_filename="lite6_light"
+  />
+
+  <!-- Ballast.
+       Even with the arm scaled to 1/6 (1.29 kg), mounting it 0.3 m up leaves
+       the combined centre of mass at z = +0.231 m, which is high enough that
+       the base can rock when the arm swings out. This 4.0 kg block sits low
+       and on the centre line, bringing the robot to 10.68 kg with the CoM at
+       z = +0.133 m. That is 98 mm lower, with only 6 mm of shift in x, and it
+       leaves the arm at 12 percent of total mass.
+
+       The block was 1.5 kg first (CoM z = +0.183 m) and was raised to 4.0 kg
+       because rocking was still reported. If it is ever raised again, note
+       that the effect is sublinear, since each addition also increases the
+       mass it has to move.
+
+       Placement was chosen by measurement, not feel. Two alternatives were
+       worse. Scaling the four stock weight_blocks (they sit at z = +0.098,
+       x = +0.060) buys far less height for the same mass and pushes the CoM
+       FORWARD, the same direction the arm reaches. Hanging it off the front
+       caster drops the CoM slightly further but moves it forward too, which
+       is the worst direction for a robot that tips while reaching out over a
+       box.
+
+       A note on comment style in URDF files. xacro keeps XML comments in its
+       output, so anything written here ends up inside the robot_description
+       string. A consumer that yaml-parses that string will choke on a line
+       whose text contains a colon followed by a space, or on a line beginning
+       with a dash and a space, because both look like YAML syntax. This
+       launch declares value_type=str precisely so that cannot happen, but it
+       costs nothing to keep comments plain.
+
+       Inertial-only, with no collision or visual geometry. Gazebo lumps
+       fixed-joint links into the parent, so this contributes mass and inertia
+       without adding a contact body that could catch on the floor. Inertia is
+       a 0.12 x 0.12 x 0.04 m cuboid. -->
+  <link name="base_ballast_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="4.0"/>
+      <inertia ixx="0.0053333" ixy="0.0" ixz="0.0"
+               iyy="0.0053333" iyz="0.0"
+               izz="0.0096"/>
+    </inertial>
+  </link>
+
+  <joint name="base_ballast_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_ballast_link"/>
+    <origin xyz="0 0 -0.030" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo>
+    <plugin filename="libgz-sim-detachable-joint-system.so" name="gz::sim::systems::DetachableJoint">
+      <parent_link>arm_uflite_vacuum_gripper_link</parent_link>
+      <child_model>top_cube_1</child_model>
+      <child_link>link</child_link>
+      <attach_topic>/vacuum_gripper/attach</attach_topic>
+      <detach_topic>/vacuum_gripper/detach</detach_topic>
+      <output_topic>/vacuum_gripper/state</output_topic>
+      <suppress_child_warning>true</suppress_child_warning>
+    </plugin>
+  </gazebo>
+  <gazebo reference="arm_vacuum_gripper_fix">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+
+  <gazebo>
+    <plugin filename="libgz-sim-odometry-publisher-system.so" name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>odom</odom_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+      <dimensions>2</dimensions>
+      <odom_publish_frequency>30</odom_publish_frequency>
+      <odom_topic>/model/turtlebot4/odometry</odom_topic>
+      <tf_topic>/model/turtlebot4/pose</tf_topic>
+    </plugin>
+  </gazebo>
+
+</robot>

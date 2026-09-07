@@ -1,0 +1,556 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 78
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+        - /Status1
+        - /RobotModel1
+        - /Map1
+        - /Costmap1
+        - /LocalCostmap1
+        - /TF1
+      Splitter Ratio: 0.5
+    Tree Height: 318
+  - Class: rviz_common/Selection
+    Name: Selection
+  - Class: rviz_common/Tool Properties
+    Expanded:
+      - /2D Goal Pose1
+    Name: Tool Properties
+    Splitter Ratio: 0.5886790156364441
+  - Class: rviz_common/Views
+    Expanded:
+      - /Current View1
+    Name: Views
+    Splitter Ratio: 0.5
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz_default_plugins/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Line
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: ""
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+      Mass Properties:
+        Inertia: false
+        Mass: false
+      Name: RobotModel
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 0.699999988079071
+      Binary representation: false
+      Binary threshold: 100
+      Class: rviz_default_plugins/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic:
+        Depth: 1
+        Durability Policy: Transient Local
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /map
+      Update Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /map_updates
+      Use Timestamp: false
+      Value: true
+    - Alpha: 0.699999988079071
+      Binary representation: false
+      Binary threshold: 100
+      Class: rviz_default_plugins/Map
+      Color Scheme: costmap
+      Draw Behind: false
+      Enabled: true
+      Name: Costmap
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /global_costmap/costmap
+      Update Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /global_costmap/costmap_updates
+      Use Timestamp: false
+      Value: true
+    - Alpha: 0.699999988079071
+      Binary representation: false
+      Binary threshold: 100
+      Class: rviz_default_plugins/Map
+      Color Scheme: costmap
+      Draw Behind: false
+      Enabled: true
+      Name: LocalCostmap
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /local_costmap/costmap
+      Update Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /local_costmap/costmap_updates
+      Use Timestamp: false
+      Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        arm_link1:
+          Value: true
+        arm_link2:
+          Value: true
+        arm_link3:
+          Value: true
+        arm_link4:
+          Value: true
+        arm_link5:
+          Value: true
+        arm_link6:
+          Value: true
+        arm_link_base:
+          Value: true
+        arm_link_eef:
+          Value: true
+        base_footprint:
+          Value: true
+        base_link:
+          Value: true
+        bump_front_center:
+          Value: true
+        bump_front_left:
+          Value: true
+        bump_front_right:
+          Value: true
+        bump_left:
+          Value: true
+        bump_right:
+          Value: true
+        bumper:
+          Value: true
+        button_1:
+          Value: true
+        button_2:
+          Value: true
+        button_power:
+          Value: true
+        cliff_front_left:
+          Value: true
+        cliff_front_right:
+          Value: true
+        cliff_side_left:
+          Value: true
+        cliff_side_right:
+          Value: true
+        front_caster_link:
+          Value: true
+        front_left_bottom_weight_block:
+          Value: true
+        front_left_top_weight_block:
+          Value: true
+        front_left_tower_standoff:
+          Value: true
+        front_right_bottom_weight_block:
+          Value: true
+        front_right_top_weight_block:
+          Value: true
+        front_right_tower_standoff:
+          Value: true
+        green_buoy_link:
+          Value: true
+        halo_link:
+          Value: true
+        imu_link:
+          Value: true
+        ir_intensity_front_center_left:
+          Value: true
+        ir_intensity_front_center_right:
+          Value: true
+        ir_intensity_front_left:
+          Value: true
+        ir_intensity_front_right:
+          Value: true
+        ir_intensity_left:
+          Value: true
+        ir_intensity_right:
+          Value: true
+        ir_intensity_side_left:
+          Value: true
+        ir_omni:
+          Value: true
+        left_wheel:
+          Value: true
+        map:
+          Value: true
+        mouse:
+          Value: true
+        oakd_camera_bracket:
+          Value: true
+        oakd_imu_frame:
+          Value: true
+        oakd_left_camera_frame:
+          Value: true
+        oakd_left_camera_optical_frame:
+          Value: true
+        oakd_link:
+          Value: true
+        oakd_rgb_camera_frame:
+          Value: true
+        oakd_rgb_camera_optical_frame:
+          Value: true
+        oakd_right_camera_frame:
+          Value: true
+        oakd_right_camera_optical_frame:
+          Value: true
+        odom:
+          Value: true
+        rear_left_tower_standoff:
+          Value: true
+        rear_right_tower_standoff:
+          Value: true
+        red_buoy_link:
+          Value: true
+        right_wheel:
+          Value: true
+        rplidar_link:
+          Value: true
+        shell_link:
+          Value: true
+        std_dock_link:
+          Value: true
+        tower_sensor_plate:
+          Value: true
+        turtlebot4/oakd_rgb_camera_frame/rgbd_camera:
+          Value: true
+        turtlebot4/rplidar_link/rplidar:
+          Value: true
+        wheel_drop_left:
+          Value: true
+        wheel_drop_right:
+          Value: true
+        yellow_buoy_link:
+          Value: true
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        map:
+          odom:
+            base_link:
+              base_footprint:
+                {}
+              bump_front_center:
+                {}
+              bump_front_left:
+                {}
+              bump_front_right:
+                {}
+              bump_left:
+                {}
+              bump_right:
+                {}
+              bumper:
+                {}
+              button_1:
+                {}
+              button_2:
+                {}
+              button_power:
+                {}
+              cliff_front_left:
+                {}
+              cliff_front_right:
+                {}
+              cliff_side_left:
+                {}
+              cliff_side_right:
+                {}
+              front_caster_link:
+                {}
+              front_left_bottom_weight_block:
+                {}
+              front_left_top_weight_block:
+                {}
+              front_right_bottom_weight_block:
+                {}
+              front_right_top_weight_block:
+                {}
+              imu_link:
+                {}
+              ir_intensity_front_center_left:
+                {}
+              ir_intensity_front_center_right:
+                {}
+              ir_intensity_front_left:
+                {}
+              ir_intensity_front_right:
+                {}
+              ir_intensity_left:
+                {}
+              ir_intensity_right:
+                {}
+              ir_intensity_side_left:
+                {}
+              ir_omni:
+                {}
+              mouse:
+                {}
+              shell_link:
+                arm_link_base:
+                  arm_link1:
+                    arm_link2:
+                      arm_link3:
+                        arm_link4:
+                          arm_link5:
+                            arm_link6:
+                              arm_link_eef:
+                                {}
+                front_left_tower_standoff:
+                  {}
+                front_right_tower_standoff:
+                  {}
+                oakd_camera_bracket:
+                  oakd_link:
+                    oakd_imu_frame:
+                      {}
+                    oakd_left_camera_frame:
+                      oakd_left_camera_optical_frame:
+                        {}
+                    oakd_rgb_camera_frame:
+                      oakd_rgb_camera_optical_frame:
+                        turtlebot4/oakd_rgb_camera_frame/rgbd_camera:
+                          {}
+                    oakd_right_camera_frame:
+                      oakd_right_camera_optical_frame:
+                        {}
+                rear_left_tower_standoff:
+                  {}
+                rear_right_tower_standoff:
+                  {}
+                rplidar_link:
+                  turtlebot4/rplidar_link/rplidar:
+                    {}
+                tower_sensor_plate:
+                  {}
+              wheel_drop_left:
+                left_wheel:
+                  {}
+              wheel_drop_right:
+                right_wheel:
+                  {}
+            std_dock_link:
+              green_buoy_link:
+                {}
+              halo_link:
+                {}
+              red_buoy_link:
+                {}
+              yellow_buoy_link:
+                {}
+      Update Interval: 0
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz_default_plugins/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Color Style: RGB
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: false
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /odom
+      Value: true
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image
+      Normalize Range: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /oakd/rgb/preview/image_raw
+      Value: true
+    - Alpha: 1
+      Arrow Length: 0.25
+      Class: nav2_rviz_plugins/ParticleCloud
+      Color: 0; 200; 0
+      Enabled: true
+      Name: AMCL ParticleCloud
+      Shape: Arrow (Flat)
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /particle_cloud
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+      Line color: 128; 128; 0
+    - Class: rviz_default_plugins/SetInitialPose
+      Covariance x: 0.25
+      Covariance y: 0.25
+      Covariance yaw: 0.06853891909122467
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /initialpose
+    - Class: rviz_default_plugins/SetGoal
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /goal_pose
+    - Class: rviz_default_plugins/PublishPoint
+      Single click: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /clicked_point
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 41.29733657836914
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 1.5697963237762451
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+      Yaw: 0
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 1531
+  Hide Left Dock: false
+  Hide Right Dock: false
+  Image:
+    collapsed: false
+  QMainWindow State: 000000ff00000000fd000000010000000000000187000005a1fc0200000005fb000000100044006900730070006c006100790073010000003d000001c9000000c900fffffffb0000001200530065006c0065006300740069006f006e010000020c000000950000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007301000002a7000000840000005c00fffffffb0000000a0056006900650077007301000003310000016c000000a400fffffffb0000000a0049006d00610067006501000004a30000013b0000001600ffffff00000831000005a100000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Selection:
+    collapsed: false
+  Tool Properties:
+    collapsed: false
+  Views:
+    collapsed: false
+  Width: 2494
+  X: 66
+  Y: 32

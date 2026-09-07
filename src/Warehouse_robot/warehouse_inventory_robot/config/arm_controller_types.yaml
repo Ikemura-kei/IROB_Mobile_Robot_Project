@@ -1,0 +1,4 @@
+controller_manager:
+  ros__parameters:
+    lite6_traj_controller:
+      type: joint_trajectory_controller/JointTrajectoryController

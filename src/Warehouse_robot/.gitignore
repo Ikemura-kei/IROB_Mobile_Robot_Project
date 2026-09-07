@@ -1,0 +1,12 @@
+# Python bytecode. Never useful to track, and actively harmful here: a .pyc
+# committed once keeps reappearing as a spurious deletion whenever anyone runs
+# the package with a different Python than the one that produced it.
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# colcon writes these into the workspace root rather than into src/, so they
+# should not appear here at all -- listed in case anyone builds in-tree.
+/build/
+/install/
+/log/

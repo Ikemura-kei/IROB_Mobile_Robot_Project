@@ -1,0 +1,74 @@
+# shelves.yaml — Warehouse Inventory Robot project
+#
+# The mission's waypoints. Box positions are given to you here; the robot does
+# not have to find them. mission_node.py reads this file with load_shelf(),
+# load_shelves() and load_home_base().
+#
+# Boxes are looked up BY NAME, so the order of the entries below does not
+# matter and you can reorder or add to them freely. Which box the mission uses
+# is decided by SOURCE_BOX and DROP_BOX_BY_GRADE at the top of mission_node.py
+# -- every grade collects from the same source box and they differ only in
+# where the cube is placed. Renaming an entry here means renaming it there too;
+# load_shelf() raises KeyError listing the names it does know, so a mismatch
+# fails immediately and says so.
+#
+# home_base
+#   Where the robot starts and returns to at the end of the mission.
+#
+# pose
+#   Where the robot should stand to work on that box, in map coordinates.
+#   x, y   map frame position
+#   yaw    heading in radians, pointing the robot AT the box. Get this wrong
+#          and the robot arrives with its back to the box, then reaches out
+#          over empty floor.
+#
+# marker_id
+#   A plain identifier for the box, nothing more. It is loaded but never used
+#   by the mission.
+#
+# priority
+#   load_shelves(priority_first=True) sorts entries marked 'high' to the front.
+
+home_base:
+  pose:
+    x:   0.0
+    y:   0.0
+    yaw: 0.0
+
+shelves:
+
+  
+  # ── ID 11 — shelf_7, centre area ─────────────────────────────────────
+  # Shelf at world (0.4, -2.0, yaw=0). Robot stands at y=-0.20, faces +y→shelf.
+  - name:      "shelf_7_ID11"
+    marker_id: 11
+    priority:  normal
+    pose:
+      x:   1.98
+      y:   7.15
+      yaw: 1.57    # facing -y (toward shelf front face)
+
+
+  # ── target-1, the E-grade drop box ──────────────────────────────────
+  # base_box_3 sits at world (-1.33, -1.29). Stand south-east of it, facing it.
+  - name:      "shelf_7_ID10"
+    marker_id: 10
+    priority:  normal
+    pose:
+      x:   -0.9
+      y:   -0.8
+      yaw: -1.57    # facing -y, toward the box
+
+  # ── target-2, the C and A grade drop box ────────────────────────────
+  # base_box_2 sits at world (13.24, -21.60), with shelf_5 just north of it at
+  # (13.50, -21.00). Approach from the SOUTH so the box is between the robot
+  # and the shelf; standing on the north side puts the robot inside the shelf
+  # and Nav2 cannot reach it. Standoff and heading mirror the source waypoint,
+  # which matters because the arm reaches along the robot's forward axis.
+  - name:      "shelf_7_ID20"
+    marker_id: 20
+    priority:  normal
+    pose:
+      x:   13.24
+      y:   -22.07
+      yaw: 1.57     # facing +y, toward the box

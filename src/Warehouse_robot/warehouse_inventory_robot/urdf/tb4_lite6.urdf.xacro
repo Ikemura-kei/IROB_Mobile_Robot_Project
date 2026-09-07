@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<robot name="tb4_lite6" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find turtlebot4_description)/urdf/standard/turtlebot4.urdf.xacro" />
+  <xacro:include filename="$(find xarm_description)/urdf/xarm_device_macro.xacro" />
+
+  <xacro:xarm_device 
+    prefix="arm_" 
+    dof="6" 
+    robot_type="lite" 
+    add_gripper="false"
+    attach_to="shell_link"
+    attach_xyz="0.0 0.0 0.25757"
+    attach_rpy="0 0 0"
+  />
+
+</robot>

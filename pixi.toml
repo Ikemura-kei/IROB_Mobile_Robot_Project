@@ -1,0 +1,216 @@
+[workspace]
+authors = ["Waqas Ali <waqasali@kth.se>"]
+name = "IROB_ws"
+channels = [
+	"https://prefix.dev/pixi-build-backends",
+	"https://prefix.dev/conda-forge",
+	"https://prefix.dev/robostack-jazzy",
+]
+platforms = [
+  "linux-64",
+]
+version = "1.0.0"
+preview = ["pixi-build"]
+
+[dependencies]
+# ROS
+ros-jazzy-desktop = ">=0.11.0,<0.12"
+ros-jazzy-ros2run = ">=0.32.6,<0.33"
+ros-jazzy-rviz2 = ">=14.1.16,<15"
+ros-jazzy-tf2-ros = ">=0.36.15,<0.37"
+ros-jazzy-tf2-tools = ">=0.36.15,<0.37"
+ros-jazzy-turtlesim = ">=1.8.3,<2"
+ros-jazzy-slam-toolbox = ">=2.8.2,<3"
+ros-jazzy-action-msgs = ">=2.0.2,<2.1"
+ros-jazzy-sensor-msgs = ">=5.3.6,<6"
+ros-jazzy-geometry-msgs = ">=5.3.6,<6"
+ros-jazzy-nav-msgs = ">=5.3.6,<6"
+ros-jazzy-rqt-gui = ">=1.6.2,<2"
+ros-jazzy-rqt-common-plugins = ">=1.2.0,<2"
+ros-jazzy-turtlebot3  = ">=2.3.1,<3"
+ros-jazzy-turtlebot3-gazebo  = ">=2.3.7,<3"
+ros-jazzy-robot-state-publisher = ">=3.3.3,<4"
+ros-jazzy-ros-gz = ">=1.0.11,<2"
+#ros-jazzy-nav2-behavior-tree = ">=,<"
+#ros-jazzy-nav2-bringup = 
+gazebo = ">=11.15.1,<12"
+ros-jazzy-controller-manager = ">=4.42.1,<5"
+
+# Course packages
+ros-jazzy-controller-manager-msgs = ">=4.42.1,<5"
+# `ros2 control list_controllers` etc. — students need it to debug the arm and
+# diffdrive controllers.
+ros-jazzy-ros2controlcli = "*"
+ros-jazzy-nav2-bringup = ">=1.3.10,<2"
+colcon-common-extensions = ">=0.3.0,<0.4"
+
+# --- Warehouse_robot (final assignment) -------------------------------------
+# These packages are built from source with colcon (`pixi run build`), so this
+# section lists their *external* dependencies only.
+
+# Toolchain needed to compile the ament_cmake packages inside the pixi env
+cxx-compiler = ">=1.7,<2"
+cmake = ">=3.22"
+ninja = ">=1.11"
+make = ">=4.3"
+pkg-config = ">=0.29"
+setuptools = ">=68"
+ros-jazzy-ament-cmake = "*"
+ros-jazzy-ament-cmake-python = "*"
+ros-jazzy-ament-lint-auto = "*"
+ros-jazzy-ament-lint-common = "*"
+ros-jazzy-rosidl-default-generators = "*"
+
+# create3_sim / turtlebot4 / turtlebot4_simulator
+ros-jazzy-irobot-create-msgs = "*"
+ros-jazzy-ros2-controllers = "*"
+ros-jazzy-gz-ros2-control = "*"
+ros-jazzy-gz-math-vendor = "*"
+ros-jazzy-gz-gui-vendor = "*"
+ros-jazzy-gz-sim-vendor = "*"
+ros-jazzy-sdformat-vendor = "*"
+ros-jazzy-rsl = "*"
+ros-jazzy-angles = "*"
+ros-jazzy-xacro = "*"
+ros-jazzy-joint-state-publisher = "*"
+ros-jazzy-nav2-simple-commander = "*"
+# Required even though simulation.launch.py passes rviz:=false —
+# turtlebot4_spawn.launch.py calls get_package_share_directory('turtlebot4_viz')
+# unconditionally, so the package must exist or the launch aborts.
+ros-jazzy-turtlebot4-viz = "*"
+
+# xarm_ros2 (the Lite6 arm on top of the TurtleBot4)
+ros-jazzy-moveit = "*"
+ros-jazzy-moveit-servo = "*"
+ros-jazzy-backward-ros = "*"
+ros-jazzy-launch-param-builder = "*"
+ros-jazzy-joy = "*"
+
+# warehouse_inventory_robot
+ros-jazzy-behaviortree-cpp = "*"
+# The assignment requires a behaviour-tree solution. behaviortree_cpp above is
+# C++ only (nav2 uses it internally) and exposes no Python API, so students
+# build their tree with py_trees instead. py_trees_ros supplies the ROS glue
+# (action clients, blackboard, tree publishing for rqt_py_trees).
+ros-jazzy-py-trees = "*"
+ros-jazzy-py-trees-ros = "*"
+ros-jazzy-moveit-msgs = "*"
+ros-jazzy-trajectory-msgs = "*"
+ros-jazzy-visualization-msgs = "*"
+ros-jazzy-tf2-geometry-msgs = "*"
+ros-jazzy-std-srvs = "*"
+
+# Several packages (behaviortree_cpp, gz-transport-vendor, proj, ...) depend on
+# an unversioned `sqlite`, which lets the solver pick 3.32.3 — a 2020 build from
+# before the lib/CLI split, so it ships its own libsqlite3.so.0 and hijacks the
+# symlink from libsqlite 3.53. libgdal then fails to load with
+# "undefined symbol: sqlite3_error_offset", which kills Gazebo's GzSceneManager
+# GUI plugin and leaves the 3D view empty. Pin it to match libsqlite.
+sqlite = ">=3.53.4,<4"
+
+# xarm_ros2/thirdparty/realsense_gazebo_plugin
+ros-jazzy-image-transport = "*"
+
+[activation.env]
+# The robot URDF asks Gazebo for <plugin filename="gz_ros2_control-system">, with
+# no path, so gz resolves it through GZ_SIM_SYSTEM_PLUGIN_PATH. The Debian package
+# ships an environment hook that adds the ROS lib dir; the robostack conda package
+# does not (it only ships ament_prefix_path/path hooks), and the .so lives in
+# $CONDA_PREFIX/lib, which is not one of gz's default plugin directories.
+# Without this the plugin never loads => no controller_manager => the controller
+# spawners fail and nothing publishes odom->base_link, so Nav2 spins forever on
+# "Could not find a connection between 'odom' and 'base_link'".
+GZ_SIM_SYSTEM_PLUGIN_PATH = "$CONDA_PREFIX/lib"
+
+# Everything in this workspace runs on one machine, so pin gz-transport to
+# loopback. Otherwise it binds whichever external interface it finds first (a
+# VPN interface such as tailscale0, for instance) and its discovery becomes
+# hostage to the machine's network state -- if that interface goes away or
+# NetworkManager restarts mid-run, the gz server hangs during startup before it
+# logs anything, and the GUI sits forever on "Waiting for subscribers to
+# [/gazebo/starting_world]". It also stops two students on the same LAN from
+# discovering each other's simulations.
+GZ_IP = "127.0.0.1"
+
+[tasks]
+
+# --- Warehouse_robot tasks ---------------------------------------------------
+# Build the from-source packages. --base-paths names them explicitly so colcon
+# never crawls anything else that lands in src/.
+# NOTE: no --symlink-install; it makes colcon call `setup.py develop --editable`,
+# which the setuptools version in this env no longer supports.
+#
+# Parallelism is deliberately capped. colcon builds several packages at once AND
+# each package's make uses every core, so the defaults give 12 x 12 concurrent
+# compilers here — enough to exhaust RAM and hard-freeze the machine on the
+# MoveIt-linked xarm packages. 4 workers x -j2 = 8 compilers max (~70% of 12).
+# On a machine with more RAM you can raise both numbers.
+build = { cmd = "colcon build --base-paths src/Warehouse_robot --parallel-workers 4", env = { MAKEFLAGS = "-j2", CMAKE_BUILD_PARALLEL_LEVEL = "2" } }
+
+# Rebuild ONLY warehouse_inventory_robot (~2s, vs. a full `build`). Use this after
+# every edit to mission_node.py: because `build` above cannot pass
+# --symlink-install, colcon COPIES the .py files into install/, so `pixi run
+# mission-node` keeps running the previously built copy until you rebuild.
+build-mission = { cmd = "colcon build --base-paths src/Warehouse_robot --packages-select warehouse_inventory_robot" }
+
+# Run: `pixi run build` once, then these two in separate terminals.
+#
+# GRADE picks the grade to configure for: e (default), c or a. It changes the
+# world, the odometry source and who publishes map -> odom. Use the SAME value
+# for mission-node below, which decides which box the cube goes on.
+#
+#     GRADE=c pixi run mission
+#     GRADE=c pixi run mission-node
+#
+# Note it is an environment variable rather than a launch argument appended on
+# the command line. `pixi run mission -- grade:=c` does NOT work: pixi appends
+# the argument to `bash -c '...'`, where it becomes $0 rather than part of the
+# command, so ros2 launch never sees it and the grade silently stays at its
+# default. That failure is invisible apart from the world being the wrong one.
+mission = { cmd = "bash -c 'source install/setup.bash && ros2 launch warehouse_inventory_robot mission.launch.py grade:=${GRADE:-e}'" }
+# use_sim_time matters here, it is not boilerplate. The tree's settling waits
+# are measured in SIMULATED time, because what they wait for -- the robot
+# settling on its suspension, the gripper taking hold -- happens in simulated
+# time. Without this the node reads the wall clock, and on a machine where the
+# simulation runs at a fraction of real time a 4 s settle becomes a fraction of
+# a second of physics, which is enough for the arm to tip the base.
+#
+# GRADE selects which box the cube is placed on, and must match the grade the
+# simulation was launched with:
+#
+#     GRADE=c pixi run mission
+#     GRADE=c pixi run mission-node
+#
+# It defaults to e. The node logs the grade it is running as on its first line,
+# so a mismatch shows up immediately rather than as the robot driving twenty
+# metres to the wrong box.
+mission-node = { cmd = "bash -c 'source install/setup.bash && ros2 run warehouse_inventory_robot mission_node --ros-args -p use_sim_time:=true -p grade:=${GRADE:-e}'" }
+
+# A-grade only, and normally NOT needed: mission.launch.py already starts
+# relocate_robot, so just use RViz's "Publish Point" tool to click where the
+# robot should start. The robot and its dock move there together, the click is
+# refused if the spot is not clear, and it should be done before starting
+# `mission-node` -- relocating mid-run teleports the robot out from under it.
+#
+# This task only exists to restart the tool by hand if it is killed, or to run
+# it against a simulation started some other way.
+#
+# Only relevant to the A grade; the other grades always start from the origin.
+relocate = { cmd = "bash -c 'source install/setup.bash && ros2 run warehouse_inventory_robot relocate_robot'" }
+
+# Ctrl-C on `pixi run mission` does not stop Gazebo: ros_gz_sim starts
+# `gz sim server` in its own process group, so the terminal's SIGINT never
+# reaches it and it is left orphaned holding the old world in memory. The same
+# goes for the bridges and nav2 nodes underneath `ros2 launch`.
+#
+# Run this between runs. If a launch ever ends in anything other than a clean
+# Ctrl-C, run it before starting the next one -- leftovers from a previous run
+# do not announce themselves, they just make the next launch behave strangely
+# (a stale /clock bridge from another world is enough to hang controller_manager
+# on "No clock received" indefinitely).
+#
+# The logic lives in scripts/sim_clean.sh, not inline here: getting the signal
+# order and the /dev/shm cleanup right takes more than one line, and a script
+# file cannot accidentally match its own command line the way a `bash -c`
+# string does. See the header of that file for the full reasoning.
+sim-clean = { cmd = "bash scripts/sim_clean.sh" }
