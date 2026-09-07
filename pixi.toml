@@ -12,7 +12,37 @@ platforms = [
 version = "1.0.0"
 preview = ["pixi-build"]
 
-[dependencies]
+# --- Environments ------------------------------------------------------------
+# Two ways to get a working ROS 2:
+#
+#   default      no packages at all. `pixi shell` installs NOTHING and simply
+#                activates the workspace, for machines where ROS 2 is already
+#                provided -- the school lab PCs, where `module add dd2410` puts
+#                it on the PATH before you ever call pixi.
+#
+#   own-device   the full ROS 2 stack, downloaded and managed by pixi, for
+#                students working on their own laptop:
+#
+#                    pixi shell -e own-device
+#
+# The tasks below are declared at the top level, so BOTH environments have them:
+# `pixi run build`, `pixi run mission` and friends work the same either way.
+[environments]
+default = { features = [] }
+own-device = { features = ["own-device"] }
+
+[activation.env]
+# Everything in this workspace runs on one machine, so pin gz-transport to
+# loopback. Otherwise it binds whichever external interface it finds first (a
+# VPN interface such as tailscale0, for instance) and its discovery becomes
+# hostage to the machine's network state -- if that interface goes away or
+# NetworkManager restarts mid-run, the gz server hangs during startup before it
+# logs anything, and the GUI sits forever on "Waiting for subscribers to
+# [/gazebo/starting_world]". It also stops two students on the same LAN from
+# discovering each other's simulations.
+GZ_IP = "127.0.0.1"
+
+[feature.own-device.dependencies]
 # ROS
 ros-jazzy-desktop = ">=0.11.0,<0.12"
 ros-jazzy-ros2run = ">=0.32.6,<0.33"
@@ -111,26 +141,20 @@ sqlite = ">=3.53.4,<4"
 # xarm_ros2/thirdparty/realsense_gazebo_plugin
 ros-jazzy-image-transport = "*"
 
-[activation.env]
+[feature.own-device.activation.env]
 # The robot URDF asks Gazebo for <plugin filename="gz_ros2_control-system">, with
-# no path, so gz resolves it through GZ_SIM_SYSTEM_PLUGIN_PATH. The Debian package
-# ships an environment hook that adds the ROS lib dir; the robostack conda package
-# does not (it only ships ament_prefix_path/path hooks), and the .so lives in
+# no path, so gz resolves it through GZ_SIM_SYSTEM_PLUGIN_PATH. The robostack
+# conda package ships only ament_prefix_path/path hooks, and the .so lives in
 # $CONDA_PREFIX/lib, which is not one of gz's default plugin directories.
 # Without this the plugin never loads => no controller_manager => the controller
 # spawners fail and nothing publishes odom->base_link, so Nav2 spins forever on
 # "Could not find a connection between 'odom' and 'base_link'".
+#
+# Scoped to this feature on purpose. The Debian packaging behind the lab module
+# ships the equivalent hook itself, so setting this in the default environment
+# would replace a correct path with an empty pixi prefix and break plugin
+# loading on exactly the machines that do not need the workaround.
 GZ_SIM_SYSTEM_PLUGIN_PATH = "$CONDA_PREFIX/lib"
-
-# Everything in this workspace runs on one machine, so pin gz-transport to
-# loopback. Otherwise it binds whichever external interface it finds first (a
-# VPN interface such as tailscale0, for instance) and its discovery becomes
-# hostage to the machine's network state -- if that interface goes away or
-# NetworkManager restarts mid-run, the gz server hangs during startup before it
-# logs anything, and the GUI sits forever on "Waiting for subscribers to
-# [/gazebo/starting_world]". It also stops two students on the same LAN from
-# discovering each other's simulations.
-GZ_IP = "127.0.0.1"
 
 [tasks]
 

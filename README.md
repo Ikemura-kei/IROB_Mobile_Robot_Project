@@ -7,6 +7,11 @@ The lab machines run everything inside a `pixi shell` rather than through
 Gazebo and the `GZ_*` variables the simulator needs are all in place once you
 are inside it.
 
+ROS 2 itself comes from the `dd2410` module, not from pixi: the default pixi
+environment deliberately declares no packages, so `pixi shell` here downloads
+and installs **nothing**. Run `module add dd2410` *before* `pixi shell`, so the
+shell inherits it.
+
 ### 1.1 Pre-requisites
 Make sure you have enough disk quota left on the lab machine. A fully-used quota can even create login issues.
 
@@ -94,9 +99,16 @@ git clone https://github.com/Ikemura-kei/IROB_Mobile_Robot_Project.git
 Then please run the following to install:
 ```bash
 cd IROB_Mobile_Robot_Project
-pixi install
-pixi run build
+pixi install -e own-device
+pixi run -e own-device build
 ```
+
+> ℹ️ **Why `-e own-device`.** The default environment is the one the lab PCs
+> use, and it installs no packages because the lab machines already provide ROS
+> 2. On your own machine you want pixi to supply the whole ROS 2 stack instead,
+> which is what the `own-device` environment is for. Pass `-e own-device` to
+> every `pixi install` and `pixi run` below, or the commands will run against
+> the empty default environment and fail to find `ros2`.
 
 ### 2.2 Running the project codebase
 
@@ -105,21 +117,21 @@ Open two terminals and run the following commands.
 Terminal-1:
 ```bash
 export ROS_LOCALHOST_ONLY=1
-GRADE=e pixi run mission
+GRADE=e pixi run -e own-device mission
 ```
 
 Terminal-2:
 ```bash
 export ROS_LOCALHOST_ONLY=1
-GRADE=e pixi run mission-node
+GRADE=e pixi run -e own-device mission-node
 ```
 
 Upon killing the simulation, it is recommended to run a cleaning utility, since the Gazebo server is sometimes left orphaned and interferes with the next run:
 ```bash
-pixi run sim-clean
+pixi run -e own-device sim-clean
 ```
 
-In case changes are made to `mission_node.py`, you only need to recompile that specific package. Feel free to use the provided utility `pixi run build-mission`, which builds only the package you modified.
+In case changes are made to `mission_node.py`, you only need to recompile that specific package. Feel free to use the provided utility `pixi run -e own-device build-mission`, which builds only the package you modified.
 
 ## 3. 💡 Hints and tips
 > You will need to have configuration files for at least `nav2` and `amcl` packages. Those configuration files can be placed at `src/Warehouse_robot/warehouse_inventory_robot/config`!
