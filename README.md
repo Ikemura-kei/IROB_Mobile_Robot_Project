@@ -12,6 +12,10 @@ are inside it.
 ```bash
 git clone https://github.com/Ikemura-kei/IROB_Mobile_Robot_Project.git
 cd IROB_Mobile_Robot_Project
+
+source /etc/profile.d/modules.sh # This line by now should be in your .bashrc, if not, either add it now or accept the fact that you need to run this everytime.
+module add dd2410 # This line by now should be in your .bashrc, if not, either add it now or accept the fact that you need to run this everytime.
+
 pixi shell
 ```
 
@@ -38,6 +42,7 @@ Terminal-1:
 ```bash
 pixi shell
 source install/setup.bash
+export ROS_LOCALHOST_ONLY=1
 GRADE=e ros2 launch warehouse_inventory_robot mission.launch.py
 ```
 
@@ -45,6 +50,7 @@ Terminal-2:
 ```bash
 pixi shell
 source install/setup.bash
+export ROS_LOCALHOST_ONLY=1
 GRADE=e ros2 run warehouse_inventory_robot mission_node --ros-args -p use_sim_time:=true
 ```
 
@@ -87,11 +93,13 @@ Open two terminals and run the following commands.
 
 Terminal-1:
 ```bash
+export ROS_LOCALHOST_ONLY=1
 GRADE=e pixi run mission
 ```
 
 Terminal-2:
 ```bash
+export ROS_LOCALHOST_ONLY=1
 GRADE=e pixi run mission-node
 ```
 
