@@ -17,10 +17,9 @@ WS="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SELF_PGID=$(ps -o pgid= -p $$ | tr -d ' ')
 ME=$(id -u)
 
-# Anything that unambiguously belongs to a sim run. The pixi environment is
-# included because an orphan whose launch is already gone matches nothing else;
-# pgrep is scoped to this user, so on the lab PCs it can never see another
-# student's processes even though they share that directory.
+# Anything that unambiguously belongs to a sim run. The pixi environment is in
+# the list because an orphan whose launch is already gone matches nothing else.
+# Every lookup below is restricted to processes and files you own.
 SEEDS=("gz sim" "gz-sim-server" "gz-sim-gui"
        "ros2 launch warehouse_inventory_robot" "${WS}/install/")
 [[ -n ${CONDA_PREFIX:-} ]] && SEEDS+=("${CONDA_PREFIX}/lib/")
