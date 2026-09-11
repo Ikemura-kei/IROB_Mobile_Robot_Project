@@ -1,7 +1,8 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import UnlessCondition
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PythonExpression
@@ -100,8 +101,29 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}]
     )
 
+    # RViz is gated on the simulation actually publishing, not on a fixed delay.
+    # It runs with use_sim_time, so starting it while /clock has no publisher
+    # leaves its clock at zero and every TF lookup failing -- an empty view that
+    # never recovers. A wall-clock delay only hides that on a fast machine.
+    wait_for_rviz = Node(
+        package='warehouse_inventory_robot',
+        executable='wait_for_ready',
+        name='wait_for_rviz',
+        output='screen',
+        arguments=['--label', 'rviz',
+                   '--topic', '/clock',
+                   '--topic', '/scan',
+                   '--timeout', '300'],
+    )
+
     return LaunchDescription([
         declare_grade, declare_x, declare_y, declare_z, declare_yaw,
         turtlebot4_gz, gripper_bridge, odom_bridge,
-        TimerAction(period=12.0, actions=[rviz_node]),
+        wait_for_rviz,
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=wait_for_rviz,
+                on_exit=[rviz_node],
+            )
+        ),
     ])
