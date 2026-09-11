@@ -62,7 +62,7 @@ source /etc/profile.d/modules.sh
 module add dd2410
 pixi shell
 source install/setup.bash
-export ROS_LOCALHOST_ONLY=1
+export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
 export GZ_IP=127.0.0.1
 export GZ_SIM_SYSTEM_PLUGIN_PATH=$CONDA_PREFIX/lib
 GRADE=e ros2 launch warehouse_inventory_robot mission.launch.py
@@ -74,13 +74,22 @@ source /etc/profile.d/modules.sh
 module add dd2410
 pixi shell
 source install/setup.bash
-export ROS_LOCALHOST_ONLY=1
+export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
 export GZ_IP=127.0.0.1
 export GZ_SIM_SYSTEM_PLUGIN_PATH=$CONDA_PREFIX/lib
 GRADE=e ros2 run warehouse_inventory_robot mission_node --ros-args -p use_sim_time:=true
 ```
 
-> ⚠️ **Keep both `export`s, and keep them after `pixi shell`.**
+> ⚠️ **Keep all three `export`s, and keep the last two after `pixi shell`.**
+>
+> `ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST` keeps ROS 2 traffic on this machine.
+> Do **not** use the older `ROS_LOCALHOST_ONLY=1` for this: it is deprecated in
+> Jazzy, and setting it switches off the modern discovery mechanism altogether
+> (every node warns that `automatic_discovery_range` "will be ignored"). On a
+> graph this size that legacy path discovers only part of the system --
+> subscribers never connect to publishers that plainly exist, so `/scan` never
+> reaches the readiness gate and nav2's lifecycle manager never finds
+> `map_server`. Nothing errors; pieces just silently fail to find each other.
 >
 > `GZ_SIM_SYSTEM_PLUGIN_PATH` is how Gazebo finds
 > `libgz_ros2_control-system.so`. The robot URDF asks for that plugin by bare
@@ -158,14 +167,14 @@ not carry between terminals.
 Terminal-1:
 ```bash
 pixi shell --manifest-path pixi
-export ROS_LOCALHOST_ONLY=1
+export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
 GRADE=e pixi run mission
 ```
 
 Terminal-2:
 ```bash
 pixi shell --manifest-path pixi
-export ROS_LOCALHOST_ONLY=1
+export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
 GRADE=e pixi run mission-node
 ```
 
