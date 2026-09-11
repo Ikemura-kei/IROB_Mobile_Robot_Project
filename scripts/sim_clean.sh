@@ -1,41 +1,13 @@
 #!/usr/bin/env bash
 #
-# Tear down every process left over from a simulation run, then clear the
-# FastDDS shared-memory segments.
+# Stop everything left over from a simulation run, then clear the FastDDS shared
+# memory. Orphaned nodes keep the process group of the `ros2 launch` that started
+# them, so signalling whole groups reaches them even after the launch is gone;
+# Gazebo runs in a group of its own and is matched by name. The shared memory is
+# cleared last, because unlinking it while a process still holds it open breaks
+# the next run instead of fixing it.
 #
-# Why this is a script and not a one-liner in pixi.toml
-# ----------------------------------------------------
-# Two things have to be right, and both were wrong in the previous inline
-# version:
-#
-#   1. ORDER OF SIGNALS. "ros2 launch" is the parent of every node in the
-#      system. SIGKILL it and it never runs its own shutdown, so all of its
-#      children are orphaned and reparented to init -- still running, still
-#      registered in the ROS graph, still publishing. A stale /clock bridge
-#      from a previous world is enough to make the next run hang forever on
-#      "No clock received", because a fresh subscriber can match the dead
-#      publisher and then wait for messages that will never come. So: SIGTERM
-#      launch first, give it time to reap its children, and only escalate to
-#      SIGKILL for whatever is genuinely stuck.
-#
-#   2. ORDER OF CLEANUP. Removing /dev/shm/fastrtps_* while a process still
-#      has those files open does NOT free them. The unlinked inode stays
-#      locked by the surviving process, the next run creates a new file with
-#      the same name, and FastDDS fails to lock it:
-#          [RTPS_TRANSPORT_SHM Error] Failed init_port fastrtps_port7024:
-#          open_and_lock_file failed
-#      which surfaces as service calls timing out all over the launch. So the
-#      shm sweep happens LAST, and only once nothing is left alive.
-#
-# Matching is done on absolute environment paths rather than bare process names.
-# Every simulation node runs out of either the pixi env's lib/ directory or the
-# colcon install/ tree, so the paths are both complete and specific -- and
-# because they live in this file rather than in a shell -c string, no pattern
-# can match the cleanup process's own command line (the bug that made earlier
-# versions kill themselves).
-
-#
-# Pass --dry-run to list what would be killed without signalling anything.
+# Pass --dry-run to list what would be stopped without signalling anything.
 
 set -uo pipefail
 
@@ -43,124 +15,83 @@ DRY_RUN=0
 [[ ${1:-} == --dry-run ]] && DRY_RUN=1
 
 WS="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SELF_PGID=$(ps -o pgid= -p $$ | tr -d ' ')
+ME=$(id -u)
 
-# Anything whose command line matches one of these belongs to a sim run.
-#
-# The ROS nodes run out of whichever pixi environment is active, and that is NOT
-# necessarily inside the workspace. On the lab PCs ROS 2 comes from the dd2410
-# environment module, whose env lives under /afs; on a student's own machine the
-# manifest is in pixi/, so the env is at pixi/.pixi/. Hardcoding
-# "${WS}/.pixi/envs/default/lib/" matched neither, which left every bridge,
-# spawner and rviz2 running after a "successful" clean -- and those survivors
-# still hold GPU contexts, so the NEXT launch's Gazebo GUI aborts with
-# "Failed to create OpenGL context".
-#
-# So take the active environment from CONDA_PREFIX, and keep the two
-# workspace-relative paths as fallbacks for when this runs outside a pixi shell.
-PATTERNS=(
-    "${WS}/install/"                  # mission_node, relocate_robot, ...
-    "gz-sim-server"
-    "gz-sim-gui"
-    "gz sim"
-)
-[[ -n ${CONDA_PREFIX:-} ]] && PATTERNS+=("${CONDA_PREFIX}/lib/")
-PATTERNS+=(
-    "${WS}/pixi/.pixi/envs/default/lib/"   # own machine, manifest in pixi/
-    "${WS}/.pixi/envs/default/lib/"        # older layout, manifest in the root
-)
+# Anything that unambiguously belongs to a sim run. The pixi environment is
+# included because an orphan whose launch is already gone matches nothing else;
+# pgrep is scoped to this user, so on the lab PCs it can never see another
+# student's processes even though they share that directory.
+SEEDS=("gz sim" "gz-sim-server" "gz-sim-gui" "ros2 launch" "${WS}/install/")
+[[ -n ${CONDA_PREFIX:-} ]] && SEEDS+=("${CONDA_PREFIX}/lib/")
+SEEDS+=("${WS}/pixi/.pixi/envs/default/lib/")
 
-# Never signal ourselves or any of our ancestors.
-protected() {
-    local pid=$1 self=$$
-    while [[ $pid -gt 1 ]]; do
-        [[ $pid -eq $self ]] && return 0
-        pid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
-        [[ -z $pid ]] && break
-    done
-    return 1
-}
-
-survivors() {
-    local pat pid out=()
-    for pat in "${PATTERNS[@]}"; do
+# Process groups containing at least one seed, excluding our own.
+groups() {
+    local pat pid pgid out=()
+    for pat in "${SEEDS[@]}"; do
         while read -r pid; do
-            [[ -z $pid ]] && continue
-            protected "$pid" && continue
-            out+=("$pid")
-        done < <(pgrep -u "$(id -u)" -f -- "$pat" 2>/dev/null)
+            pgid=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')
+            [[ -z $pgid || $pgid -le 1 || $pgid == "$SELF_PGID" ]] && continue
+            out+=("$pgid")
+        done < <(pgrep -u "$ME" -f -- "$pat" 2>/dev/null)
     done
     printf '%s\n' "${out[@]+"${out[@]}"}" | sort -un
 }
 
-signal_all() {
-    local sig=$1 pid n=0
-    while read -r pid; do
-        [[ -z $pid ]] && continue
-        kill "-${sig}" "$pid" 2>/dev/null && n=$((n + 1))
-    done < <(survivors)
+# Every process in those groups -- this is what picks up the orphans.
+members() {
+    local pgid out=() p
+    for pgid in $(groups); do
+        while read -r p; do out+=("$p"); done < <(pgrep -g "$pgid" 2>/dev/null)
+    done
+    printf '%s\n' "${out[@]+"${out[@]}"}" | sort -un
+}
+
+signal_groups() {
+    local pgid n=0
+    for pgid in $(groups); do
+        kill "-${1}" "-${pgid}" 2>/dev/null && n=$((n + 1))
+    done
     echo "$n"
 }
 
 wait_clear() {
     local deadline=$((SECONDS + $1))
     while [[ $SECONDS -lt $deadline ]]; do
-        [[ -z "$(survivors)" ]] && return 0
+        [[ -z "$(members)" ]] && return 0
         sleep 0.5
     done
     return 1
 }
 
+show() { ps -o pid,pgid,etime,cmd -p "$(echo "$1" | tr '\n' ',' | sed 's/,$//')" 2>/dev/null; }
+
+found="$(members)"
+
 if [[ $DRY_RUN -eq 1 ]]; then
-    found="$(survivors)"
-    if [[ -z $found ]]; then
-        echo "sim-clean: nothing running -- clean"
-        exit 0
-    fi
-    echo "sim-clean: would stop these (PPID 1 means orphaned by an earlier kill):"
-    ps -o pid,ppid,etime,cmd -p "$(echo "$found" | tr '\n' ',' | sed 's/,$//')" 2>/dev/null
+    [[ -z $found ]] && { echo "sim-clean: nothing running -- clean"; exit 0; }
+    echo "sim-clean: would stop these:"
+    show "$found"
     exit 0
 fi
 
-# ---------------------------------------------------------------- phase 1 ---
-# Ask ros2 launch to shut down. It signals each of its own nodes in turn, which
-# is the only path that leaves nothing orphaned.
-launch_pids=$(pgrep -f -- 'ros2 launch' 2>/dev/null | while read -r p; do
-    protected "$p" || echo "$p"
-done)
-if [[ -n $launch_pids ]]; then
-    echo "sim-clean: asking ros2 launch to shut down ($(echo "$launch_pids" | wc -l) found)"
-    # shellcheck disable=SC2086
-    kill -TERM $launch_pids 2>/dev/null
-    wait_clear 12 && { echo "sim-clean: launch shut down cleanly"; }
+if [[ -n $found ]]; then
+    echo "sim-clean: SIGTERM to $(signal_groups TERM) process group(s)"
+    wait_clear 12 || {
+        echo "sim-clean: SIGKILL to $(signal_groups KILL) stuck group(s)"
+        wait_clear 5
+    }
 fi
 
-# ---------------------------------------------------------------- phase 2 ---
-# Whatever launch did not own, or did not manage to stop: orphans from earlier
-# kills, nodes started by hand, a detached gazebo.
-if [[ -n "$(survivors)" ]]; then
-    n=$(signal_all TERM)
-    [[ $n -gt 0 ]] && echo "sim-clean: SIGTERM to $n leftover process(es)"
-    wait_clear 8
-fi
-
-# ---------------------------------------------------------------- phase 3 ---
-if [[ -n "$(survivors)" ]]; then
-    n=$(signal_all KILL)
-    [[ $n -gt 0 ]] && echo "sim-clean: SIGKILL to $n stuck process(es)"
-    wait_clear 5
-fi
-
-# ---------------------------------------------------------------- phase 4 ---
-# Only now is it safe to drop the shared-memory segments.
-remaining="$(survivors)"
+remaining="$(members)"
 if [[ -n $remaining ]]; then
     echo "sim-clean: WARNING -- these refused to die, leaving /dev/shm alone:"
-    ps -o pid,etime,cmd -p "$(echo "$remaining" | tr '\n' ',' | sed 's/,$//')" 2>/dev/null | tail -n +2
-    echo "sim-clean: removing shm files now would break the next run; kill them by hand first"
+    show "$remaining" | tail -n +2
+    echo "sim-clean: clearing shm now would break the next run; kill them by hand first"
     exit 1
 fi
 
 shm=$(ls /dev/shm 2>/dev/null | grep -c '^\(sem\.\)\?fastrtps' || true)
 rm -f /dev/shm/fastrtps_* /dev/shm/sem.fastrtps_* 2>/dev/null
-echo "sim-clean: cleared ${shm} FastDDS shm segment(s)"
-echo "sim-clean: clean"
+echo "sim-clean: cleared ${shm} FastDDS shm segment(s) -- clean"
