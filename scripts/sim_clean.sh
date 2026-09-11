@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 #
-# Stop everything left over from a simulation run, then clear the FastDDS shared
-# memory. Orphaned nodes keep the process group of the `ros2 launch` that started
-# them, so signalling whole groups reaches them even after the launch is gone;
-# Gazebo runs in a group of its own and is matched by name. The shared memory is
-# cleared last, because unlinking it while a process still holds it open breaks
-# the next run instead of fixing it.
+# Stop everything left over from a simulation run, then clear its FastDDS shared
+# memory. Orphans keep the process group of the `ros2 launch` that started them,
+# so signalling whole groups reaches them even once the launch is gone; Gazebo
+# sits in its own group and is matched by name. Shared memory goes last: dropping
+# it while something still holds it open breaks the next run instead of fixing it.
 #
 # Pass --dry-run to list what would be stopped without signalling anything.
 
@@ -22,7 +21,8 @@ ME=$(id -u)
 # included because an orphan whose launch is already gone matches nothing else;
 # pgrep is scoped to this user, so on the lab PCs it can never see another
 # student's processes even though they share that directory.
-SEEDS=("gz sim" "gz-sim-server" "gz-sim-gui" "ros2 launch" "${WS}/install/")
+SEEDS=("gz sim" "gz-sim-server" "gz-sim-gui"
+       "ros2 launch warehouse_inventory_robot" "${WS}/install/")
 [[ -n ${CONDA_PREFIX:-} ]] && SEEDS+=("${CONDA_PREFIX}/lib/")
 SEEDS+=("${WS}/pixi/.pixi/envs/default/lib/")
 
@@ -92,6 +92,8 @@ if [[ -n $remaining ]]; then
     exit 1
 fi
 
-shm=$(ls /dev/shm 2>/dev/null | grep -c '^\(sem\.\)\?fastrtps' || true)
-rm -f /dev/shm/fastrtps_* /dev/shm/sem.fastrtps_* 2>/dev/null
+shmfiles=$(find /dev/shm -maxdepth 1 -user "$ME" \
+    \( -name 'fastrtps_*' -o -name 'sem.fastrtps_*' \) 2>/dev/null)
+shm=$(printf '%s' "$shmfiles" | grep -c . || true)
+[[ -n $shmfiles ]] && printf '%s\n' "$shmfiles" | xargs -r rm -f 2>/dev/null
 echo "sim-clean: cleared ${shm} FastDDS shm segment(s) -- clean"
