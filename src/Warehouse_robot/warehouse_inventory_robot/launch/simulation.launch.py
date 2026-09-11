@@ -105,6 +105,11 @@ def generate_launch_description():
     # It runs with use_sim_time, so starting it while /clock has no publisher
     # leaves its clock at zero and every TF lookup failing -- an empty view that
     # never recovers. A wall-clock delay only hides that on a fast machine.
+    #
+    # /clock alone, deliberately. /scan would be the stronger signal, but it is a
+    # gpu_lidar: on a machine whose rendering engine fails to initialise it never
+    # appears at all, and gating on it would withhold RViz for the full timeout
+    # exactly when you most need to look at what the simulation is doing.
     wait_for_rviz = Node(
         package='warehouse_inventory_robot',
         executable='wait_for_ready',
@@ -112,7 +117,6 @@ def generate_launch_description():
         output='screen',
         arguments=['--label', 'rviz',
                    '--topic', '/clock',
-                   '--topic', '/scan',
                    '--timeout', '300'],
     )
 
