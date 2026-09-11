@@ -27,7 +27,7 @@
 #      which surfaces as service calls timing out all over the launch. So the
 #      shm sweep happens LAST, and only once nothing is left alive.
 #
-# Matching is done on absolute workspace paths rather than bare process names.
+# Matching is done on absolute environment paths rather than bare process names.
 # Every simulation node runs out of either the pixi env's lib/ directory or the
 # colcon install/ tree, so the paths are both complete and specific -- and
 # because they live in this file rather than in a shell -c string, no pattern
@@ -45,12 +45,28 @@ DRY_RUN=0
 WS="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Anything whose command line matches one of these belongs to a sim run.
+#
+# The ROS nodes run out of whichever pixi environment is active, and that is NOT
+# necessarily inside the workspace. On the lab PCs ROS 2 comes from the dd2410
+# environment module, whose env lives under /afs; on a student's own machine the
+# manifest is in pixi/, so the env is at pixi/.pixi/. Hardcoding
+# "${WS}/.pixi/envs/default/lib/" matched neither, which left every bridge,
+# spawner and rviz2 running after a "successful" clean -- and those survivors
+# still hold GPU contexts, so the NEXT launch's Gazebo GUI aborts with
+# "Failed to create OpenGL context".
+#
+# So take the active environment from CONDA_PREFIX, and keep the two
+# workspace-relative paths as fallbacks for when this runs outside a pixi shell.
 PATTERNS=(
-    "${WS}/.pixi/envs/default/lib/"   # ros_gz_bridge, nav2, rviz2, spawners, ...
     "${WS}/install/"                  # mission_node, relocate_robot, ...
     "gz-sim-server"
     "gz-sim-gui"
     "gz sim"
+)
+[[ -n ${CONDA_PREFIX:-} ]] && PATTERNS+=("${CONDA_PREFIX}/lib/")
+PATTERNS+=(
+    "${WS}/pixi/.pixi/envs/default/lib/"   # own machine, manifest in pixi/
+    "${WS}/.pixi/envs/default/lib/"        # older layout, manifest in the root
 )
 
 # Never signal ourselves or any of our ancestors.
@@ -71,7 +87,7 @@ survivors() {
             [[ -z $pid ]] && continue
             protected "$pid" && continue
             out+=("$pid")
-        done < <(pgrep -f -- "$pat" 2>/dev/null)
+        done < <(pgrep -u "$(id -u)" -f -- "$pat" 2>/dev/null)
     done
     printf '%s\n' "${out[@]+"${out[@]}"}" | sort -un
 }
