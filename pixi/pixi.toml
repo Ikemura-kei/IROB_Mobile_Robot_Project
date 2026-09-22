@@ -1,0 +1,155 @@
+[workspace]
+authors = ["Waqas Ali <waqasali@kth.se>"]
+name = "IROB_ws"
+channels = [
+	"https://prefix.dev/pixi-build-backends",
+	"https://prefix.dev/conda-forge",
+	"https://prefix.dev/robostack-jazzy",
+]
+platforms = [
+  "linux-64",
+]
+version = "1.0.0"
+preview = ["pixi-build"]
+
+# This manifest lives in pixi/ so the workspace root has no pixi project: pixi
+# searches parents but never children, keeping it out of the way of the lab PCs,
+# which get ROS 2 from `module add dd2410`. Students on their own machine opt in
+# with `pixi shell --manifest-path pixi/pixi.toml` (README section 2).
+
+[dependencies]
+# ROS
+ros-jazzy-desktop = ">=0.11.0,<0.12"
+ros-jazzy-ros2run = ">=0.32.6,<0.33"
+ros-jazzy-rviz2 = ">=14.1.16,<15"
+ros-jazzy-tf2-ros = ">=0.36.15,<0.37"
+ros-jazzy-tf2-tools = ">=0.36.15,<0.37"
+ros-jazzy-turtlesim = ">=1.8.3,<2"
+ros-jazzy-slam-toolbox = ">=2.8.2,<3"
+ros-jazzy-action-msgs = ">=2.0.2,<2.1"
+ros-jazzy-sensor-msgs = ">=5.3.6,<6"
+ros-jazzy-geometry-msgs = ">=5.3.6,<6"
+ros-jazzy-nav-msgs = ">=5.3.6,<6"
+ros-jazzy-rqt-gui = ">=1.6.2,<2"
+ros-jazzy-rqt-common-plugins = ">=1.2.0,<2"
+ros-jazzy-turtlebot3  = ">=2.3.1,<3"
+ros-jazzy-turtlebot3-gazebo  = ">=2.3.7,<3"
+ros-jazzy-robot-state-publisher = ">=3.3.3,<4"
+ros-jazzy-ros-gz = ">=1.0.11,<2"
+#ros-jazzy-nav2-behavior-tree = ">=,<"
+#ros-jazzy-nav2-bringup = 
+gazebo = ">=11.15.1,<12"
+ros-jazzy-controller-manager = ">=4.42.1,<5"
+
+# Course packages
+ros-jazzy-controller-manager-msgs = ">=4.42.1,<5"
+# `ros2 control list_controllers` etc., for debugging the arm and diffdrive
+# controllers.
+ros-jazzy-ros2controlcli = "*"
+ros-jazzy-nav2-bringup = ">=1.3.10,<2"
+colcon-common-extensions = ">=0.3.0,<0.4"
+
+# --- Warehouse_robot (final assignment) -------------------------------------
+# Built from source with colcon (`pixi run build`), so this lists their external
+# dependencies only.
+
+# Toolchain needed to compile the ament_cmake packages inside the pixi env
+cxx-compiler = ">=1.7,<2"
+cmake = ">=3.22"
+ninja = ">=1.11"
+make = ">=4.3"
+pkg-config = ">=0.29"
+setuptools = ">=68"
+ros-jazzy-ament-cmake = "*"
+ros-jazzy-ament-cmake-python = "*"
+ros-jazzy-ament-lint-auto = "*"
+ros-jazzy-ament-lint-common = "*"
+ros-jazzy-rosidl-default-generators = "*"
+
+# create3_sim / turtlebot4 / turtlebot4_simulator
+ros-jazzy-irobot-create-msgs = "*"
+ros-jazzy-ros2-controllers = "*"
+ros-jazzy-gz-ros2-control = "*"
+ros-jazzy-gz-math-vendor = "*"
+ros-jazzy-gz-gui-vendor = "*"
+ros-jazzy-gz-sim-vendor = "*"
+ros-jazzy-sdformat-vendor = "*"
+ros-jazzy-rsl = "*"
+ros-jazzy-angles = "*"
+ros-jazzy-xacro = "*"
+ros-jazzy-joint-state-publisher = "*"
+ros-jazzy-nav2-simple-commander = "*"
+# Required even with rviz:=false: turtlebot4_spawn.launch.py looks this package
+# up unconditionally, so the launch aborts if it is missing.
+ros-jazzy-turtlebot4-viz = "*"
+
+# xarm_ros2 (the Lite6 arm on top of the TurtleBot4)
+ros-jazzy-moveit = "*"
+ros-jazzy-moveit-servo = "*"
+ros-jazzy-backward-ros = "*"
+ros-jazzy-launch-param-builder = "*"
+ros-jazzy-joy = "*"
+
+# warehouse_inventory_robot
+ros-jazzy-behaviortree-cpp = "*"
+# behaviortree_cpp above is C++ only, so students build their behaviour tree
+# with py_trees; py_trees_ros supplies the ROS glue.
+ros-jazzy-py-trees = "*"
+ros-jazzy-py-trees-ros = "*"
+ros-jazzy-moveit-msgs = "*"
+ros-jazzy-trajectory-msgs = "*"
+ros-jazzy-visualization-msgs = "*"
+ros-jazzy-tf2-geometry-msgs = "*"
+ros-jazzy-std-srvs = "*"
+
+# Pinned to match libsqlite. Unpinned, the solver picks 3.32.3, which hijacks
+# libsqlite3.so.0 and breaks libgdal, leaving Gazebo's 3D view empty.
+sqlite = ">=3.53.4,<4"
+
+# xarm_ros2/thirdparty/realsense_gazebo_plugin
+ros-jazzy-image-transport = "*"
+
+[activation.env]
+# The URDF asks gz for gz_ros2_control-system by name, and the robostack package
+# ships no hook pointing at $CONDA_PREFIX/lib. Without this the plugin never
+# loads, so there is no controller_manager and nothing publishes odom->base_link.
+GZ_SIM_SYSTEM_PLUGIN_PATH = "$CONDA_PREFIX/lib"
+
+# Everything here runs on one machine, so pin gz-transport to loopback.
+# Otherwise it binds whatever external interface it finds first and hangs at
+# startup if that interface changes; it also keeps students off each other's sims.
+GZ_IP = "127.0.0.1"
+
+[tasks]
+
+# Every task carries `cwd = ".."` because this manifest lives one level down, so
+# build/, install/ and log/ land in the workspace root.
+
+# --- Warehouse_robot tasks ---------------------------------------------------
+# Parallelism is capped deliberately: colcon builds packages in parallel and each
+# make uses every core, which without the cap can exhaust RAM and freeze the
+# machine. No --symlink-install; this env's setuptools no longer supports it.
+build = { cmd = "colcon build --base-paths src/Warehouse_robot --parallel-workers 4", env = { MAKEFLAGS = "-j2", CMAKE_BUILD_PARALLEL_LEVEL = "2" }, cwd = ".." }
+
+# Rebuild only warehouse_inventory_robot (~2s). Run it after every edit to
+# mission_node.py, since colcon copies the .py files into install/.
+build-mission = { cmd = "colcon build --base-paths src/Warehouse_robot --packages-select warehouse_inventory_robot", cwd = ".." }
+
+# GRADE selects the grade -- e (default), c or a -- and must match mission-node
+# below. It has to be an environment variable: `pixi run mission -- grade:=c`
+# silently does nothing, because pixi appends the argument as $0.
+mission = { cmd = "bash -c 'source install/setup.bash && ros2 launch warehouse_inventory_robot mission.launch.py grade:=${GRADE:-e} headless:=${HEADLESS:-false}'", cwd = ".." }
+# use_sim_time is not boilerplate: the settling waits are measured in simulated
+# time, and on the wall clock they collapse to almost nothing and the arm tips
+# the base. GRADE picks which box the cube goes on and must match `mission`.
+mission-node = { cmd = "bash -c 'source install/setup.bash && ros2 run warehouse_inventory_robot mission_node --ros-args -p use_sim_time:=true -p grade:=${GRADE:-e}'", cwd = ".." }
+
+# A grade only, and normally not needed: mission.launch.py already starts
+# relocate_robot, so just click with RViz's "Publish Point" tool before starting
+# mission-node. This task only restarts the tool by hand if it was killed.
+relocate = { cmd = "bash -c 'source install/setup.bash && ros2 run warehouse_inventory_robot relocate_robot'", cwd = ".." }
+
+# Ctrl-C does not stop Gazebo: `gz sim server` runs in its own process group and
+# is left orphaned holding the old world. Run this between runs -- leftovers do
+# not announce themselves, they just make the next launch behave strangely.
+cleanup = { cmd = "bash scripts/cleanup.sh", cwd = ".." }

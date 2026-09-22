@@ -1,0 +1,126 @@
+# Lite6 link inertial parameters, scaled to 1/6 of the real robot.
+#
+# Generated from xarm6_type9_HT_BR2.yaml (the stock Lite6 table) by dividing every
+# mass and every inertia tensor component by 6. Centres of mass (origin) are
+# unchanged, so the arm keeps its real geometry and only gets lighter.
+#
+# Rationale: the real Lite6 (~7.7 kg incl. base and vacuum gripper) mounted 0.3 m
+# above the TurtleBot4 shell puts the combined centre of mass high enough that the
+# base tips when the arm swings out. This lightened table keeps the simulation
+# tractable for the assignment. It is NOT physically accurate -- do not use it for
+# payload, torque or motor-sizing analysis.
+#
+# Two entries here have no counterpart in the stock table, because upstream
+# hardcodes them rather than reading them from YAML:
+#   link_base      -- fallback lives in lite6/lite6.urdf.xacro
+#   vacuum_gripper -- fallback lives in vacuum_gripper/lite_vacuum_gripper.urdf.xacro
+# Both xacros use their hardcoded value when the key is absent, so stock tables
+# are unaffected.
+#
+# To change the scale factor, re-derive from xarm6_type9_HT_BR2.yaml rather than
+# editing these numbers in place.
+
+link_base:
+  inertia:
+    ixx: 0.0
+    ixy: 0.0
+    ixz: 0.0
+    iyy: 0.0
+    iyz: 0.0
+    izz: 0.0
+  mass: 0.275655836305275
+  origin:
+    x: -0.00829544579053192
+    y: 3.26357432323433e-05
+    z: 0.0631194584987089
+link1:
+  inertia:
+    ixx: 0.00024194000000000003
+    ixy: -2.0666666666666666e-06
+    ixz: 1.1166666666666666e-06
+    iyy: 0.00014788333333333331
+    iyz: -2.0916666666666666e-05
+    izz: 0.00021998833333333333
+  mass: 0.23516666666666666
+  origin:
+    x: -0.00036
+    y: 0.04195
+    z: -0.0025
+link2:
+  inertia:
+    ixx: 0.0002642333333333333
+    ixy: 1.1276666666666666e-06
+    ixz: 0.00019189333333333332
+    iyy: 0.0009349499999999999
+    iyz: -1.8999999999999998e-07
+    izz: 0.0008083333333333333
+  mass: 0.22333333333333336
+  origin:
+    x: 0.179
+    y: 0.0
+    z: 0.0584
+link3:
+  inertia:
+    ixx: 0.00014768333333333334
+    ixy: 6.547833333333333e-05
+    ixz: -1.1776666666666665e-05
+    iyy: 0.0002630833333333333
+    iyz: 4.075e-06
+    izz: 0.000307795
+  mass: 0.15883333333333333
+  origin:
+    x: 0.072
+    y: -0.0357
+    z: -0.001
+link4:
+  inertia:
+    ixx: 0.0006175
+    ixy: 3.333333333333333e-07
+    ixz: -1.195e-06
+    iyy: 0.0005075833333333333
+    iyz: 0.00015531333333333332
+    izz: 0.0002568833333333333
+  mass: 0.214
+  origin:
+    x: -0.002
+    y: -0.0285
+    z: -0.0813
+link5:
+  inertia:
+    ixx: 9.446666666666665e-05
+    ixy: -1.0e-07
+    ixz: 8.833333333333332e-07
+    iyy: 8.461666666666666e-05
+    iyz: 7.999999999999999e-08
+    izz: 8.833333333333333e-05
+  mass: 0.134
+  origin:
+    x: 0.0
+    y: 0.01
+    z: 0.0019
+link6:
+  inertia:
+    ixx: 1.2876666666666666e-05
+    ixy: -1.6666666666666665e-07
+    ixz: -6.666666666666667e-08
+    iyy: 1.42775e-05
+    iyz: 1.0e-07
+    izz: 2.4689999999999996e-05
+  mass: 0.021666666666666667
+  origin:
+    x: 0.0
+    y: -0.00194
+    z: -0.0102
+vacuum_gripper:
+  inertia:
+    ixx: 7.850999999999999e-05
+    ixy: 6.548666666666667e-08
+    ixz: 4.4228333333333333e-07
+    iyy: 5.512e-05
+    iyz: -1.8291666666666668e-06
+    izz: 4.273666666666667e-05
+  mass: 0.023333333333333334
+  origin:
+    x: 0.0
+    y: 0.0
+    z: 0.03

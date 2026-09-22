@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>warehouse_inventory_robot</name>
+  <version>1.0.0</version>
+  <description>Warehouse Inventory Robot — ROS2 Jazzy final project base package</description>
+  <maintainer email="instructor@university.edu">Instructor</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>nav2_msgs</depend>
+  <depend>nav2_bringup</depend>
+  <depend>nav2_amcl</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <!-- behaviortree_cpp is pulled in by nav2, which uses it internally. It has no
+       Python bindings, so a Python solution cannot register nodes into it;
+       py_trees is the behaviour-tree library students actually build against.
+       smach/smach_ros used to be listed here but are not packaged for
+       robostack-jazzy at all, so `import smach` could never have worked. A
+       state-machine solution can be written with plain control flow instead. -->
+  <depend>behaviortree_cpp</depend>
+  <depend>py_trees</depend>
+  <depend>py_trees_ros</depend>
+  <depend>turtlebot4_simulator</depend>
+  <depend>turtlebot4_navigation</depend>
+  <depend>control_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>moveit_msgs</depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

@@ -1,0 +1,25 @@
+# Declares the arm controller's TYPE to controller_manager at startup.
+#
+# gz_ros2_control loads this (see the <parameters> tags in
+# irobot_create_description/urdf/create3.urdf.xacro) when it creates
+# controller_manager, so `lite6_traj_controller.type` exists before any spawner
+# runs.
+#
+# This replaces mission.launch.py's old "DIRECT ARM CONTROLLER BYPASS":
+#   ros2 param set /controller_manager lite6_traj_controller.type ...
+# which raced against controller_manager's startup. On a cold start
+# controller_manager advertises its parameter services long before it can serve
+# them, so that command died with "Wait for service timed out waiting for
+# parameter services for node /controller_manager", the type was never set, and
+# the spawner failed with "The 'type' param was not defined for
+# 'lite6_traj_controller'" -- leaving the arm completely dead.
+#
+# Deliberately minimal: it sets ONLY the type. The controller's actual
+# configuration still comes from arm_controllers.yaml via the spawner's
+# --param-file. Keeping them separate means this file cannot accidentally
+# override controller_manager settings that the Create 3 base relies on
+# (update_rate in particular, which control.yaml sets to 1000).
+controller_manager:
+  ros__parameters:
+    lite6_traj_controller:
+      type: joint_trajectory_controller/JointTrajectoryController

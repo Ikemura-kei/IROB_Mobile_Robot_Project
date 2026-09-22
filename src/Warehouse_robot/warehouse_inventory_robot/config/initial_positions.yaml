@@ -1,0 +1,7 @@
+initial_positions:
+  arm_joint1: 0.0
+  arm_joint2: 0.87
+  arm_joint3: 1.57
+  arm_joint4: 0.0
+  arm_joint5: -1.57
+  arm_joint6: 0.0
